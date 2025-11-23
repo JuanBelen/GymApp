@@ -76,7 +76,7 @@
         <button class="tab-btn" data-view="resumen-view">Resumen</button>
       </nav>
 
-      <!-- VISTA CARGAR SERIES (BLOQUE 3–5 SERIES) -->
+      <!-- VISTA CARGAR SERIES (3–5 series por ejercicio) -->
       <section id="cargar-view" class="card view">
         <h3>Cargar nuevas series</h3>
         <form id="serie-form" class="form">
@@ -108,7 +108,7 @@
             />
           </label>
 
-          <!-- Contenedor dinámico de filas: Serie 1, 2, 3... -->
+          <!-- Filas de series -->
           <div id="series-container" class="series-container"></div>
 
           <!-- Agregar hasta 5 series -->
@@ -131,58 +131,70 @@
       <section id="historial-view" class="card view hidden">
         <h3>Historial de entrenamientos</h3>
         <p class="small-text">Se muestran las series que fuiste cargando.</p>
+        <p id="historial-counter" class="small-text counter-line"></p>
 
+        <!-- FILTROS -->
         <div class="filters-row">
-  <!-- Filtro por grupo -->
-  <label class="filter-label">
-    Grupo:
-    <select id="historial-grupo-filter">
-      <option value="TODOS">Todos</option>
-      <option value="Pecho">Pecho</option>
-      <option value="Espalda">Espalda</option>
-      <option value="Hombros">Hombros</option>
-      <option value="Bíceps">Bíceps</option>
-      <option value="Tríceps">Tríceps</option>
-      <option value="Piernas">Piernas</option>
-      <option value="Glúteos">Glúteos</option>
-      <option value="Core / Abdominales">Core / Abdominales</option>
-    </select>
-  </label>
+          <!-- Grupo -->
+          <div class="filter-block">
+            <span class="filter-title">Grupo:</span>
+            <select id="historial-grupo-filter">
+              <option value="TODOS">Todos</option>
+              <option value="Pecho">Pecho</option>
+              <option value="Espalda">Espalda</option>
+              <option value="Hombros">Hombros</option>
+              <option value="Bíceps">Bíceps</option>
+              <option value="Tríceps">Tríceps</option>
+              <option value="Piernas">Piernas</option>
+              <option value="Glúteos">Glúteos</option>
+              <option value="Core / Abdominales">Core / Abdominales</option>
+            </select>
+          </div>
 
-  <!-- HOY -->
-  <button type="button" id="filtro-hoy-btn" class="chip-btn">
-    Hoy
-  </button>
+          <!-- Ejercicio -->
+          <div class="filter-block">
+            <span class="filter-title">Ejercicio:</span>
+            <select id="historial-ejercicio-filter">
+              <option value="TODOS">Todos</option>
+            </select>
+          </div>
 
-  <!-- MES ACTUAL -->
-  <label class="filter-label">
-    <input type="checkbox" id="filtro-mes-actual" />
-    Mes actual
-  </label>
+          <!-- Rango -->
+          <div class="filter-block chips-block">
+            <span class="filter-title">Rango:</span>
+            <button type="button" id="filtro-hoy-btn" class="chip-btn">
+              📅 Hoy
+            </button>
+            <label class="chip-checkbox">
+              <input type="checkbox" id="filtro-mes-actual" />
+              <span>🗓️ Mes actual</span>
+            </label>
+          </div>
 
-  <!-- ORDEN -->
-  <label class="filter-label">
-    Ordenar:
-    <select id="orden-historial-select">
-      <option value="fecha_desc">Fecha ↓ (reciente primero)</option>
-      <option value="fecha_asc">Fecha ↑ (antiguas primero)</option>
-      <option value="peso_desc">Peso ↓</option>
-      <option value="peso_asc">Peso ↑</option>
-      <option value="volumen_desc">Volumen ↓</option>
-      <option value="volumen_asc">Volumen ↑</option>
-    </select>
-  </label>
+          <!-- Orden -->
+          <div class="filter-block">
+            <span class="filter-title">Ordenar:</span>
+            <select id="orden-historial-select">
+              <option value="fecha_desc">Fecha ↓ (reciente primero)</option>
+              <option value="fecha_asc">Fecha ↑ (antiguas primero)</option>
+              <option value="peso_desc">Peso ↓</option>
+              <option value="peso_asc">Peso ↑</option>
+              <option value="volumen_desc">Volumen ↓</option>
+              <option value="volumen_asc">Volumen ↑</option>
+            </select>
+          </div>
 
-  <!-- LIMPIAR -->
-  <button
-    type="button"
-    id="limpiar-filtros-btn"
-    class="btn secondary btn-compact"
-  >
-    Borrar filtros
-  </button>
-</div>
-
+          <!-- Limpiar -->
+          <div class="filter-block filter-actions">
+            <button
+              type="button"
+              id="limpiar-filtros-btn"
+              class="btn secondary btn-compact"
+            >
+              Borrar filtros
+            </button>
+          </div>
+        </div>
 
         <div class="table-wrapper">
           <table>
@@ -208,14 +220,10 @@
       <!-- VISTA RESUMEN -->
       <section id="resumen-view" class="card view hidden">
         <h3>Resumen de progreso</h3>
-        <div id="resumen-global" class="resumen-grid">
-          <!-- tarjetas globales -->
-        </div>
+        <div id="resumen-global" class="resumen-grid"></div>
 
         <h4>Por grupo muscular</h4>
-        <div id="resumen-grupos" class="resumen-grid">
-          <!-- tarjetas por grupo -->
-        </div>
+        <div id="resumen-grupos" class="resumen-grid"></div>
       </section>
     </main>
 
@@ -225,4 +233,3 @@
   </div>
 </body>
 </html>
-
