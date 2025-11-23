@@ -9,11 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const appSection = document.getElementById("app-section");
   const messageBox = document.getElementById("message-box");
   const userNameLabel = document.getElementById("user-name");
+  const streakMessageEl = document.getElementById("streak-message");
 
   // Formularios
   const loginForm = document.getElementById("login-form");
   const registerForm = document.getElementById("register-form");
   const serieForm = document.getElementById("serie-form");
+  const serieSubmitBtn = serieForm.querySelector("button[type='submit']");
 
   // Inputs serie
   const fechaInput = document.getElementById("serie-fecha");
@@ -38,6 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const historialBody = document.getElementById("historial-body");
   const resumenGlobalContainer = document.getElementById("resumen-global");
   const resumenGruposContainer = document.getElementById("resumen-grupos");
+
+  // Para saber si estamos editando una serie
+  let editingIndex = null;
 
   // Setear fecha hoy por defecto
   setToday(fechaInput);
@@ -95,6 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
     appSection.classList.remove("hidden");
     userNameLabel.textContent = username;
 
+    editingIndex = null;
+    serieSubmitBtn.textContent = "Guardar serie";
+    clearSerieForm();
     renderHistorial(username);
     renderResumen(username);
   }
@@ -102,6 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function switchToAuth() {
     authSection.classList.remove("hidden");
     appSection.classList.add("hidden");
+    editingIndex = null;
+    serieSubmitBtn.textContent = "Guardar serie";
+    clearSerieForm();
   }
 
   function setToday(input) {
@@ -119,6 +130,48 @@ document.addEventListener("DOMContentLoaded", () => {
     seriesInput.value = "";
     repsInput.value = "";
     pesoInput.value = "";
+  }
+
+  // ====================== STREAK / FRASE MOTIVACIONAL =======================
+
+  function updateStreakMessage(historial) {
+    if (!streakMessageEl) return;
+
+    if (!historial || historial.length === 0) {
+      streakMessageEl.textContent =
+        "Todavía no registraste ninguna serie. Tu racha arranca hoy 💪";
+      return;
+    }
+
+    const fechas = historial.map((h) => h.fecha).sort(); // ascendente
+    const ultima = fechas[fechas.length - 1];
+
+    const today = new Date();
+    const [y, m, d] = ultima.split("-");
+    const ultimaDate = new Date(Number(y), Number(m) - 1, Number(d));
+
+    const diffMs =
+      today.setHours(0, 0, 0, 0) - ultimaDate.setHours(0, 0, 0, 0);
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    const diasUnicos = new Set(fechas);
+    const sesiones = diasUnicos.size;
+
+    let msg = "";
+
+    if (sesiones === 1 && diffDias === 0) {
+      msg = "Primer día registrado. No rompas la racha 🔥";
+    } else if (diffDias === 0) {
+      msg = `Entrenaste hoy. Llevás ${sesiones} días registrados, seguí así 💪`;
+    } else if (diffDias === 1) {
+      msg = "Ayer entrenaste. Hoy podés mantener viva la racha 🔥";
+    } else if (diffDias <= 3) {
+      msg = `Hace ${diffDias} días que no registrás nada. Volvé a sumar un día a tu racha 💥`;
+    } else {
+      msg = `Llevás ${sesiones} días entrenados en total. Siempre podés arrancar una nueva racha 💪`;
+    }
+
+    streakMessageEl.textContent = msg;
   }
 
   // ====================== AUTH =======================
@@ -189,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showMessage("Sesión cerrada.", "info");
   });
 
-  // ====================== CARGAR SERIE =======================
+  // ====================== CARGAR / EDITAR SERIE =======================
 
   serieForm.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -224,14 +277,31 @@ document.addEventListener("DOMContentLoaded", () => {
       volumen: series * reps * peso,
     };
 
-    data.historial.push(entry);
+    let msg;
 
-    // Opcional: si el ejercicio no existe en rutinas, lo agrego
-    if (!data.rutinas.some((r) => r.ejercicio === ejercicio && r.grupo === grupo)) {
-      data.rutinas.push({
-        grupo,
-        ejercicio,
-      });
+    if (editingIndex !== null && data.historial[editingIndex]) {
+      // Actualizar serie existente
+      data.historial[editingIndex] = entry;
+      editingIndex = null;
+      serieSubmitBtn.textContent = "Guardar serie";
+      msg = "Serie actualizada.";
+    } else {
+      // Nueva serie
+      data.historial.push(entry);
+
+      // Opcional: si el ejercicio no existe en rutinas, lo agrego
+      if (
+        !data.rutinas.some(
+          (r) => r.ejercicio === ejercicio && r.grupo === grupo
+        )
+      ) {
+        data.rutinas.push({
+          grupo,
+          ejercicio,
+        });
+      }
+
+      msg = "Serie guardada en tu historial.";
     }
 
     saveUserData(username, data);
@@ -240,10 +310,10 @@ document.addEventListener("DOMContentLoaded", () => {
     renderHistorial(username);
     renderResumen(username);
 
-    showMessage("Serie guardada en tu historial.", "success");
+    showMessage(msg, "success");
   });
 
-  // ====================== HISTORIAL =======================
+  // ====================== HISTORIAL (CON EDITAR/BORRAR) =======================
 
   function renderHistorial(username) {
     const data = getUserData(username);
@@ -254,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (historial.length === 0) {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
-      cell.colSpan = 7;
+      cell.colSpan = 8;
       cell.textContent = "Todavía no cargaste ninguna serie.";
       cell.style.textAlign = "center";
       row.appendChild(cell);
@@ -262,8 +332,14 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Mapeo con índice original
+    const indexed = historial.map((item, index) => ({
+      ...item,
+      _idx: index,
+    }));
+
     // Ordenar por fecha desc (último arriba)
-    const sorted = [...historial].sort((a, b) => {
+    const sorted = indexed.sort((a, b) => {
       if (a.fecha === b.fecha) return 0;
       return a.fecha < b.fecha ? 1 : -1;
     });
@@ -279,11 +355,76 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${item.reps}</td>
         <td>${item.peso}</td>
         <td>${item.volumen}</td>
+        <td>
+          <button class="table-btn edit" data-action="edit" data-index="${item._idx}">Editar</button>
+          <button class="table-btn delete" data-action="delete" data-index="${item._idx}">Borrar</button>
+        </td>
       `;
 
       historialBody.appendChild(row);
     }
   }
+
+  // Delegación de eventos para botones Editar / Borrar
+  historialBody.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const idx = Number(btn.dataset.index);
+    const username = getCurrentSession();
+
+    if (!username) {
+      showMessage("Tu sesión expiró. Volvé a iniciar sesión.", "error");
+      switchToAuth();
+      return;
+    }
+
+    const data = getUserData(username);
+
+    if (action === "edit") {
+      const entry = data.historial[idx];
+      if (!entry) return;
+
+      // Llevar datos al formulario
+      fechaInput.value = entry.fecha;
+      grupoInput.value = entry.grupo;
+      ejercicioInput.value = entry.ejercicio;
+      seriesInput.value = entry.series;
+      repsInput.value = entry.reps;
+      pesoInput.value = entry.peso;
+
+      editingIndex = idx;
+      serieSubmitBtn.textContent = "Guardar cambios";
+
+      // Cambiar a la pestaña "Cargar serie"
+      tabButtons.forEach((b) => {
+        b.classList.toggle("active", b.dataset.view === "cargar-view");
+      });
+      Object.values(views).forEach((view) =>
+        view.classList.toggle("hidden", view.id !== "cargar-view")
+      );
+
+      showMessage("Editando serie seleccionada.", "info");
+    }
+
+    if (action === "delete") {
+      if (!data.historial[idx]) return;
+      data.historial.splice(idx, 1);
+      saveUserData(username, data);
+
+      // Si justo teníamos esa serie en edición, reseteo
+      if (editingIndex === idx) {
+        editingIndex = null;
+        serieSubmitBtn.textContent = "Guardar serie";
+        clearSerieForm();
+      }
+
+      renderHistorial(username);
+      renderResumen(username);
+      showMessage("Serie eliminada.", "info");
+    }
+  });
 
   function formatDate(isoDate) {
     // yyyy-mm-dd -> dd/mm/yyyy
@@ -299,6 +440,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resumenGlobalContainer.innerHTML = "";
     resumenGruposContainer.innerHTML = "";
+
+    // Actualizar frase tipo streak
+    updateStreakMessage(historial);
 
     if (historial.length === 0) {
       const card = document.createElement("div");
@@ -423,8 +567,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================== SERVICE WORKER (PWA) =======================
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js").catch((err) => {
-      console.error("Error registrando service worker:", err);
-    });
+    navigator
+      .register("./service-worker.js")
+      .catch((err) => {
+        console.error("Error registrando service worker:", err);
+      });
   }
 });
