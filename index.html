@@ -104,8 +104,8 @@
           </label>
           <div class="form-row">
             <label>
-              Series
-              <input type="number" id="serie-series" min="1" step="1" required />
+              Nº de serie
+              <input type="number" id="serie-series" min="1" step="1" placeholder="1, 2, 3..." required />
             </label>
             <label>
               Reps
@@ -125,6 +125,24 @@
       <section id="historial-view" class="card view hidden">
         <h3>Historial de entrenamientos</h3>
         <p class="small-text">Se muestran las series que fuiste cargando.</p>
+
+        <div class="filters-row">
+          <label class="filter-label">
+            Grupo:
+            <select id="historial-grupo-filter">
+              <option value="TODOS">Todos</option>
+              <option value="Pecho">Pecho</option>
+              <option value="Espalda">Espalda</option>
+              <option value="Hombros">Hombros</option>
+              <option value="Bíceps">Bíceps</option>
+              <option value="Tríceps">Tríceps</option>
+              <option value="Piernas">Piernas</option>
+              <option value="Glúteos">Glúteos</option>
+              <option value="Core / Abdominales">Core / Abdominales</option>
+            </select>
+          </label>
+        </div>
+
         <div class="table-wrapper">
           <table>
             <thead>
@@ -132,7 +150,7 @@
                 <th>Fecha</th>
                 <th>Grupo</th>
                 <th>Ejercicio</th>
-                <th>Series</th>
+                <th>Nº serie</th>
                 <th>Reps</th>
                 <th>Peso (kg)</th>
                 <th>Volumen</th>
