@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GymApp - Tu Rutina</title>
 
+  <!-- PWA -->
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="/GymApp/manifest.webmanifest" />
 
+  <!-- Estilos y lógica -->
   <link rel="stylesheet" href="/GymApp/styles.css" />
   <script src="/GymApp/app.js" defer></script>
 </head>
@@ -18,76 +20,114 @@
       <p class="subtitle">Tus rutinas y progresos, en un solo lugar</p>
     </header>
 
+    <!-- Mensajes globales -->
     <div id="message-box" class="message hidden"></div>
 
-    <!-- LOGIN / REGISTER -->
+    <!-- AUTENTICACIÓN -->
     <main id="auth-section">
       <section class="card">
         <h2>Iniciar sesión</h2>
         <form id="login-form" class="form">
-          <label>Usuario <input id="login-username" required /></label>
-          <label>Contraseña <input type="password" id="login-password" required /></label>
-          <button class="btn primary">Entrar</button>
+          <label>
+            Usuario
+            <input type="text" id="login-username" autocomplete="username" required />
+          </label>
+          <label>
+            Contraseña
+            <input type="password" id="login-password" autocomplete="current-password" required />
+          </label>
+          <button type="submit" class="btn primary">Entrar</button>
         </form>
       </section>
 
       <section class="card">
         <h2>Crear cuenta</h2>
         <form id="register-form" class="form">
-          <label>Usuario <input id="register-username" required /></label>
-          <label>Contraseña <input type="password" id="register-password" required /></label>
-          <button class="btn secondary">Registrarme</button>
+          <label>
+            Usuario
+            <input type="text" id="register-username" autocomplete="username" required />
+          </label>
+          <label>
+            Contraseña (mínimo 4 caracteres)
+            <input type="password" id="register-password" autocomplete="new-password" required />
+          </label>
+          <button type="submit" class="btn secondary">Registrarme</button>
         </form>
       </section>
     </main>
 
-    <!-- APP -->
+    <!-- APLICACIÓN -->
     <main id="app-section" class="hidden">
-      <section class="card app-top">
-        <div>
-          <h2>Hola, <span id="user-name"></span> 👋</h2>
-          <p class="small-text">Gestioná tus entrenamientos y seguimiento</p>
-          <p id="streak-message" class="streak-message"></p>
+      <section class="card">
+        <div class="app-topbar">
+          <div>
+            <h2>Hola, <span id="user-name"></span> 👋</h2>
+            <p class="small-text">Gestioná tus entrenamientos y seguimiento</p>
+            <p id="streak-message" class="streak-message"></p>
+          </div>
+          <button id="logout-btn" class="btn danger">Cerrar sesión</button>
         </div>
-        <button id="logout-btn" class="btn danger">Cerrar sesión</button>
       </section>
 
+      <!-- NAV INTERNO -->
       <nav class="tabs card">
         <button class="tab-btn active" data-view="cargar-view">Cargar serie</button>
         <button class="tab-btn" data-view="historial-view">Historial</button>
         <button class="tab-btn" data-view="resumen-view">Resumen</button>
       </nav>
 
-      <!-- CARGAR SERIES -->
+      <!-- VISTA CARGAR SERIES (3–5 series por ejercicio) -->
       <section id="cargar-view" class="card view">
         <h3>Cargar nuevas series</h3>
-
         <form id="serie-form" class="form">
-          <label>Fecha <input type="date" id="serie-fecha" required /></label>
-          <label>Grupo muscular
+          <label>
+            Fecha
+            <input type="date" id="serie-fecha" required />
+          </label>
+          <label>
+            Grupo muscular
             <select id="serie-grupo" required>
               <option value="">Seleccionar…</option>
-              <option>Pecho</option><option>Espalda</option><option>Hombros</option>
-              <option>Bíceps</option><option>Tríceps</option><option>Piernas</option>
-              <option>Glúteos</option><option>Core / Abdominales</option>
+              <option>Pecho</option>
+              <option>Espalda</option>
+              <option>Hombros</option>
+              <option>Bíceps</option>
+              <option>Tríceps</option>
+              <option>Piernas</option>
+              <option>Glúteos</option>
+              <option>Core / Abdominales</option>
             </select>
           </label>
-
-          <label>Ejercicio
-            <input id="serie-ejercicio" placeholder="Press banca, sentadilla…" required />
+          <label>
+            Ejercicio
+            <input
+              type="text"
+              id="serie-ejercicio"
+              placeholder="Press banca, Dominadas, Sentadillas…"
+              required
+            />
           </label>
 
+          <!-- Filas de series -->
           <div id="series-container" class="series-container"></div>
 
-          <button type="button" id="add-serie-btn" class="btn secondary full-width">
+          <!-- Agregar hasta 5 series -->
+          <button
+            type="button"
+            id="add-serie-btn"
+            class="btn secondary full-width"
+          >
             + Agregar serie
           </button>
 
-          <button class="btn primary full-width" id="guardar-series-btn">Guardar series</button>
+          <!-- Guardar bloque de series -->
+          <button type="submit" class="btn primary full-width" id="guardar-series-btn">
+            Guardar series
+          </button>
         </form>
       </section>
 
-      <!-- HISTORIAL -->
+      <!-- VISTA HISTORIAL -->
       <section id="historial-view" class="card view hidden">
         <h3>Historial de entrenamientos</h3>
         <p class="small-text">Se muestran las series que fuiste cargando.</p>
@@ -95,17 +135,23 @@
 
         <!-- FILTROS -->
         <div class="filters-row">
-
+          <!-- Grupo -->
           <div class="filter-block">
             <span class="filter-title">Grupo:</span>
             <select id="historial-grupo-filter">
               <option value="TODOS">Todos</option>
-              <option>Pecho</option><option>Espalda</option><option>Hombros</option>
-              <option>Bíceps</option><option>Tríceps</option><option>Piernas</option>
-              <option>Glúteos</option><option>Core / Abdominales</option>
+              <option value="Pecho">Pecho</option>
+              <option value="Espalda">Espalda</option>
+              <option value="Hombros">Hombros</option>
+              <option value="Bíceps">Bíceps</option>
+              <option value="Tríceps">Tríceps</option>
+              <option value="Piernas">Piernas</option>
+              <option value="Glúteos">Glúteos</option>
+              <option value="Core / Abdominales">Core / Abdominales</option>
             </select>
           </div>
 
+          <!-- Ejercicio -->
           <div class="filter-block">
             <span class="filter-title">Ejercicio:</span>
             <select id="historial-ejercicio-filter">
@@ -113,22 +159,24 @@
             </select>
           </div>
 
+          <!-- Rango -->
           <div class="filter-block chips-block">
             <span class="filter-title">Rango:</span>
-
-            <button type="button" id="filtro-hoy-btn" class="chip-btn">📅 Hoy</button>
-
+            <button type="button" id="filtro-hoy-btn" class="chip-btn">
+              📅 Hoy
+            </button>
             <label class="chip-checkbox">
               <input type="checkbox" id="filtro-mes-actual" />
               <span>🗓️ Mes actual</span>
             </label>
           </div>
 
+          <!-- Orden -->
           <div class="filter-block">
             <span class="filter-title">Ordenar:</span>
             <select id="orden-historial-select">
-              <option value="fecha_desc">Fecha ↓</option>
-              <option value="fecha_asc">Fecha ↑</option>
+              <option value="fecha_desc">Fecha ↓ (reciente primero)</option>
+              <option value="fecha_asc">Fecha ↑ (antiguas primero)</option>
               <option value="peso_desc">Peso ↓</option>
               <option value="peso_asc">Peso ↑</option>
               <option value="volumen_desc">Volumen ↓</option>
@@ -136,8 +184,13 @@
             </select>
           </div>
 
-          <div class="filter-actions">
-            <button type="button" id="limpiar-filtros-btn" class="btn secondary btn-compact">
+          <!-- Limpiar -->
+          <div class="filter-block filter-actions">
+            <button
+              type="button"
+              id="limpiar-filtros-btn"
+              class="btn secondary btn-compact"
+            >
               Borrar filtros
             </button>
           </div>
@@ -147,15 +200,24 @@
           <table>
             <thead>
               <tr>
-                <th>Fecha</th><th>Grupo</th><th>Ejercicio</th><th>Nº serie</th>
-                <th>Reps</th><th>Peso</th><th>Volumen</th><th>Acciones</th>
+                <th>Fecha</th>
+                <th>Grupo</th>
+                <th>Ejercicio</th>
+                <th>Nº serie</th>
+                <th>Reps</th>
+                <th>Peso (kg)</th>
+                <th>Volumen</th>
+                <th>Acciones</th>
               </tr>
             </thead>
-            <tbody id="historial-body"></tbody>
+            <tbody id="historial-body">
+              <!-- filas dinámicas -->
+            </tbody>
           </table>
         </div>
       </section>
 
+      <!-- VISTA RESUMEN -->
       <section id="resumen-view" class="card view hidden">
         <h3>Resumen de progreso</h3>
         <div id="resumen-global" class="resumen-grid"></div>
@@ -166,9 +228,8 @@
     </main>
 
     <footer class="app-footer">
-      <p>GymApp Phase 2 · App móvil desde el navegador</p>
+      <p>GymApp Phase 2 · Hecha para usarse como app móvil desde el navegador</p>
     </footer>
-
   </div>
 </body>
 </html>
