@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const registerForm = document.getElementById("register-form");
   const serieForm = document.getElementById("serie-form");
   const serieSubmitBtn = serieForm.querySelector("button[type='submit']");
+  const guardarBatchBtn = document.getElementById("guardar-batch-btn");
 
   // Inputs serie
   const fechaInput = document.getElementById("serie-fecha");
@@ -45,7 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const historialGrupoFilter = document.getElementById("historial-grupo-filter");
   let filtroGrupo = "TODOS";
 
-  // Para saber si estamos editando una serie
+  // Batch de series (en memoria antes de guardar)
+  let currentBatch = [];
+
+  // Para saber si estamos editando una serie guardada
   let editingIndex = null;
 
   // Setear fecha hoy por defecto
@@ -105,8 +109,10 @@ document.addEventListener("DOMContentLoaded", () => {
     userNameLabel.textContent = username;
 
     editingIndex = null;
-    serieSubmitBtn.textContent = "Guardar serie";
+    serieSubmitBtn.textContent = "Agregar a la lista";
     clearSerieForm();
+    currentBatch = [];
+    renderBatch();
     renderHistorial(username);
     renderResumen(username);
   }
@@ -115,8 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
     authSection.classList.remove("hidden");
     appSection.classList.add("hidden");
     editingIndex = null;
-    serieSubmitBtn.textContent = "Guardar serie";
+    serieSubmitBtn.textContent = "Agregar a la lista";
     clearSerieForm();
+    currentBatch = [];
+    renderBatch();
   }
 
   function setToday(input) {
@@ -131,6 +139,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setToday(fechaInput);
     grupoInput.value = "";
     ejercicioInput.value = "";
+    serieNumInput.value = "";
+    repsInput.value = "";
+    pesoInput.value = "";
+  }
+
+  function clearSeriesFieldsKeepContext() {
+    // Deja fecha / grupo / ejercicio igual, limpia sólo serie/reps/peso
     serieNumInput.value = "";
     repsInput.value = "";
     pesoInput.value = "";
@@ -248,6 +263,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ====================== CARGAR / EDITAR SERIE =======================
 
+  // 1) Submit del formulario: si estoy editando => actualizo historial,
+  //    si NO => agrego la serie al batch (no guarda todavía en historial)
   serieForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const username = getCurrentSession();
@@ -288,41 +305,144 @@ document.addEventListener("DOMContentLoaded", () => {
       volumen: reps * peso,
     };
 
-    let msg;
+    // Si estoy editando una serie ya guardada, la actualizo directo en historial
+    if (editingIndex !== null) {
+      if (!data.historial[editingIndex]) {
+        showMessage("No se encontró la serie a editar.", "error");
+        editingIndex = null;
+        serieSubmitBtn.textContent = "Agregar a la lista";
+        return;
+      }
 
-    if (editingIndex !== null && data.historial[editingIndex]) {
-      // Actualizar serie existente
       data.historial[editingIndex] = entry;
-      editingIndex = null;
-      serieSubmitBtn.textContent = "Guardar serie";
-      msg = "Serie actualizada.";
-    } else {
-      // Nueva serie
-      data.historial.push(entry);
+      saveUserData(username, data);
 
-      // Opcional: si el ejercicio no existe en rutinas, lo agrego
+      editingIndex = null;
+      serieSubmitBtn.textContent = "Agregar a la lista";
+      clearSerieForm();
+      currentBatch = [];
+      renderBatch();
+      renderHistorial(username);
+      renderResumen(username);
+      showMessage("Serie actualizada.", "success");
+      return;
+    }
+
+    // Si NO estoy editando: agrego al batch
+    currentBatch.push(entry);
+    renderBatch();
+
+    // Auto-sugerir siguiente Nº de serie
+    serieNumInput.value = serieNumero + 1;
+    repsInput.value = "";
+    pesoInput.value = "";
+
+    showMessage(
+      "Serie agregada a la lista. Guardá todas juntas con 'Guardar series'.",
+      "info"
+    );
+  });
+
+  // 2) Guardar batch completo en historial
+  guardarBatchBtn.addEventListener("click", () => {
+    const username = getCurrentSession();
+    if (!username) {
+      showMessage("Tu sesión expiró. Volvé a iniciar sesión.", "error");
+      switchToAuth();
+      return;
+    }
+
+    if (currentBatch.length === 0) {
+      showMessage("No hay series en la lista para guardar.", "error");
+      return;
+    }
+
+    if (currentBatch.length < 3) {
+      showMessage(
+        "Cargá al menos 3 series antes de guardar el lote.",
+        "error"
+      );
+      return;
+    }
+
+    const data = getUserData(username);
+
+    // Añadir todas las series del batch al historial
+    data.historial = data.historial.concat(currentBatch);
+
+    // Actualizar rutinas (ejercicios únicos)
+    currentBatch.forEach((entry) => {
       if (
         !data.rutinas.some(
-          (r) => r.ejercicio === ejercicio && r.grupo === grupo
+          (r) =>
+            r.ejercicio === entry.ejercicio && r.grupo === entry.grupo
         )
       ) {
         data.rutinas.push({
-          grupo,
-          ejercicio,
+          grupo: entry.grupo,
+          ejercicio: entry.ejercicio,
         });
       }
-
-      msg = "Serie guardada en tu historial.";
-    }
+    });
 
     saveUserData(username, data);
 
+    currentBatch = [];
+    renderBatch();
     clearSerieForm();
     renderHistorial(username);
     renderResumen(username);
 
-    showMessage(msg, "success");
+    showMessage("Series guardadas en tu historial.", "success");
   });
+
+  function renderBatch() {
+    const batchBody = document.getElementById("batch-body");
+    batchBody.innerHTML = "";
+
+    if (currentBatch.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 5;
+      cell.textContent = "Todavía no agregaste series a la lista.";
+      cell.style.textAlign = "center";
+      row.appendChild(cell);
+      batchBody.appendChild(row);
+      return;
+    }
+
+    currentBatch
+      .slice()
+      .sort((a, b) => a.serieNumero - b.serieNumero)
+      .forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.serieNumero}</td>
+          <td>${item.reps}</td>
+          <td>${item.peso}</td>
+          <td>${item.volumen}</td>
+          <td>
+            <button class="table-btn delete" data-batch-index="${index}">
+              Quitar
+            </button>
+          </td>
+        `;
+        batchBody.appendChild(row);
+      });
+  }
+
+  // Quitar serie del batch
+  document
+    .getElementById("batch-body")
+    .addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-batch-index]");
+      if (!btn) return;
+      const idx = Number(btn.dataset.batchIndex);
+      if (idx >= 0 && idx < currentBatch.length) {
+        currentBatch.splice(idx, 1);
+        renderBatch();
+      }
+    });
 
   // ====================== HISTORIAL (CON EDITAR/BORRAR + FILTRO) =======================
 
@@ -330,7 +450,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = getUserData(username);
     const rawHistorial = data.historial || [];
 
-    // Aplicar filtro por grupo
     const historial =
       filtroGrupo === "TODOS"
         ? rawHistorial
@@ -342,20 +461,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
       cell.colSpan = 8;
-      cell.textContent = "Todavía no cargaste ninguna serie (o no hay en este grupo).";
+      cell.textContent =
+        "Todavía no cargaste ninguna serie (o no hay en este grupo).";
       cell.style.textAlign = "center";
       row.appendChild(cell);
       historialBody.appendChild(row);
       return;
     }
 
-    // Mapeo con índice original
     const indexed = historial.map((item) => {
       const idx = rawHistorial.indexOf(item);
       return { ...item, _idx: idx };
     });
 
-    // Ordenar por fecha desc y Nº de serie asc
     const sorted = indexed.sort((a, b) => {
       if (a.fecha === b.fecha && a.ejercicio === b.ejercicio) {
         return a.serieNumero - b.serieNumero;
@@ -387,7 +505,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Delegación de eventos para botones Editar / Borrar
   historialBody.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -408,7 +525,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const entry = data.historial[idx];
       if (!entry) return;
 
-      // Llevar datos al formulario
       fechaInput.value = entry.fecha;
       grupoInput.value = entry.grupo;
       ejercicioInput.value = entry.ejercicio;
@@ -427,6 +543,9 @@ document.addEventListener("DOMContentLoaded", () => {
         view.classList.toggle("hidden", view.id !== "cargar-view")
       );
 
+      currentBatch = [];
+      renderBatch();
+
       showMessage("Editando serie seleccionada.", "info");
     }
 
@@ -435,10 +554,9 @@ document.addEventListener("DOMContentLoaded", () => {
       data.historial.splice(idx, 1);
       saveUserData(username, data);
 
-      // Si justo teníamos esa serie en edición, reseteo
       if (editingIndex === idx) {
         editingIndex = null;
-        serieSubmitBtn.textContent = "Guardar serie";
+        serieSubmitBtn.textContent = "Agregar a la lista";
         clearSerieForm();
       }
 
@@ -449,7 +567,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function formatDate(isoDate) {
-    // yyyy-mm-dd -> dd/mm/yyyy
     const [y, m, d] = isoDate.split("-");
     return `${d}/${m}/${y}`;
   }
@@ -463,7 +580,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resumenGlobalContainer.innerHTML = "";
     resumenGruposContainer.innerHTML = "";
 
-    // Actualizar frase tipo streak
     updateStreakMessage(historial);
 
     if (historial.length === 0) {
@@ -478,14 +594,12 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Globales
-    const totalSeries = historial.length; // una entrada = una serie real
+    const totalSeries = historial.length;
     const totalVolumen = historial.reduce((acc, h) => acc + h.volumen, 0);
 
     const diasUnicos = new Set(historial.map((h) => h.fecha));
     const sesiones = diasUnicos.size;
 
-    // Máximo peso por ejercicio
     const maxPorEjercicio = {};
     for (const h of historial) {
       const key = `${h.grupo}__${h.ejercicio}`;
@@ -495,7 +609,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const mayorPeso = Math.max(...Object.values(maxPorEjercicio));
 
-    // Cards globales
     resumenGlobalContainer.appendChild(
       makeResumenCard(
         "Sesiones registradas",
@@ -528,7 +641,6 @@ document.addEventListener("DOMContentLoaded", () => {
       )
     );
 
-    // Por grupo muscular
     const gruposMap = {};
     for (const h of historial) {
       if (!gruposMap[h.grupo]) {
@@ -537,7 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
           volumen: 0,
         };
       }
-      gruposMap[h.grupo].series += 1; // una entrada = una serie
+      gruposMap[h.grupo].series += 1;
       gruposMap[h.grupo].volumen += h.volumen;
     }
 
