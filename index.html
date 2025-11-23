@@ -77,91 +77,94 @@
       </nav>
 
       <!-- VISTA CARGAR SERIE (AHORA CON LISTA Y GUARDAR SERIES) -->
-      <section id="cargar-view" class="card view">
-        <h3>Cargar nuevas series</h3>
-        <form id="serie-form" class="form">
-          <label>
-            Fecha
-            <input type="date" id="serie-fecha" required />
-          </label>
-          <label>
-            Grupo muscular
-            <select id="serie-grupo" required>
-              <option value="">Seleccionar…</option>
-              <option>Pecho</option>
-              <option>Espalda</option>
-              <option>Hombros</option>
-              <option>Bíceps</option>
-              <option>Tríceps</option>
-              <option>Piernas</option>
-              <option>Glúteos</option>
-              <option>Core / Abdominales</option>
-            </select>
-          </label>
-          <label>
-            Ejercicio
-            <input
-              type="text"
-              id="serie-ejercicio"
-              placeholder="Press banca, Dominadas, Sentadillas…"
-              required
-            />
-          </label>
-          <div class="form-row">
-            <label>
-              Nº de serie
-              <input
-                type="number"
-                id="serie-series"
-                min="1"
-                step="1"
-                placeholder="1, 2, 3..."
-                required
-              />
-            </label>
-            <label>
-              Reps
-              <input type="number" id="serie-reps" min="1" step="1" required />
-            </label>
-            <label>
-              Peso (kg)
-              <input type="number" id="serie-peso" min="0" step="0.5" required />
-            </label>
-          </div>
+     <section id="cargar-view" class="card view">
+  <h3>Cargar nuevas series</h3>
+  <form id="serie-form" class="form">
+    <label>
+      Fecha
+      <input type="date" id="serie-fecha" required />
+    </label>
+    <label>
+      Grupo muscular
+      <select id="serie-grupo" required>
+        <option value="">Seleccionar…</option>
+        <option>Pecho</option>
+        <option>Espalda</option>
+        <option>Hombros</option>
+        <option>Bíceps</option>
+        <option>Tríceps</option>
+        <option>Piernas</option>
+        <option>Glúteos</option>
+        <option>Core / Abdominales</option>
+      </select>
+    </label>
+    <label>
+      Ejercicio
+      <input
+        type="text"
+        id="serie-ejercicio"
+        placeholder="Press banca, Dominadas, Sentadillas…"
+        required
+      />
+    </label>
+    <div class="form-row">
+      <label>
+        Nº de serie
+        <input
+          type="number"
+          id="serie-series"
+          min="1"
+          step="1"
+          placeholder="1, 2, 3..."
+          required
+        />
+      </label>
+      <label>
+        Reps
+        <input type="number" id="serie-reps" min="1" step="1" required />
+      </label>
+      <label>
+        Peso (kg)
+        <input type="number" id="serie-peso" min="0" step="0.5" required />
+      </label>
+    </div>
 
-          <button type="submit" class="btn secondary full-width">
-            Agregar a la lista
-          </button>
-        </form>
+    <!-- ESTE BOTÓN YA NO GUARDA EN EL HISTORIAL, SOLO AGREGA AL LOTE -->
+    <button type="submit" class="btn secondary full-width">
+      Agregar a la lista
+    </button>
+  </form>
 
-        <div class="batch-wrapper">
-          <div class="batch-header">
-            <h4>Series en esta sesión</h4>
-            <small class="small-text">
-              Cargá al menos 3 series y luego guardalas todas juntas.
-            </small>
-          </div>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nº serie</th>
-                  <th>Reps</th>
-                  <th>Peso (kg)</th>
-                  <th>Volumen</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="batch-body">
-                <!-- series en memoria -->
-              </tbody>
-            </table>
-          </div>
-          <button id="guardar-batch-btn" class="btn primary full-width">
-            Guardar series
-          </button>
-        </div>
-      </section>
+  <!-- LISTA DE SERIES DEL LOTE + BOTÓN GUARDAR SERIES -->
+  <div class="batch-wrapper">
+    <div class="batch-header">
+      <h4>Series en esta sesión</h4>
+      <small class="small-text">
+        Cargá al menos 3 series y luego guardalas todas juntas.
+      </small>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Nº serie</th>
+            <th>Reps</th>
+            <th>Peso (kg)</th>
+            <th>Volumen</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="batch-body">
+          <!-- series en memoria -->
+        </tbody>
+      </table>
+    </div>
+    <button id="guardar-batch-btn" class="btn primary full-width">
+      Guardar series
+    </button>
+  </div>
+</section>
+
 
       <!-- VISTA HISTORIAL -->
       <section id="historial-view" class="card view hidden">
@@ -226,3 +229,4 @@
   </div>
 </body>
 </html>
+
