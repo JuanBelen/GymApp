@@ -405,12 +405,35 @@ let ordenHistorial = "fecha_desc";
 
   function renderHistorial(username) {
     const data = getUserData(username);
-    const rawHistorial = data.historial || [];
+const rawHistorial = data.historial || [];
 
-    const historial =
-      filtroGrupo === "TODOS"
-        ? rawHistorial
-        : rawHistorial.filter((h) => h.grupo === filtroGrupo);
+// 1) Filtro por grupo
+let historial =
+  filtroGrupo === "TODOS"
+    ? [...rawHistorial]
+    : rawHistorial.filter((h) => h.grupo === filtroGrupo);
+
+// 2) Filtro HOY
+if (filtroSoloHoy) {
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+  const dd = String(hoy.getDate()).padStart(2, "0");
+  const hoyIso = `${yyyy}-${mm}-${dd}`;
+  historial = historial.filter((h) => h.fecha === hoyIso);
+}
+
+// 3) Filtro MES ACTUAL
+if (filtroSoloMesActual) {
+  const hoy = new Date();
+  const añoActual = hoy.getFullYear();
+  const mesActual = hoy.getMonth() + 1; // 1–12
+
+  historial = historial.filter((h) => {
+    const [y, m] = h.fecha.split("-").map(Number);
+    return y === añoActual && m === mesActual;
+  });
+}
 
     historialBody.innerHTML = "";
 
@@ -426,12 +449,33 @@ let ordenHistorial = "fecha_desc";
       return;
     }
 
-    const indexed = historial.map((item) => {
-      const idx = rawHistorial.indexOf(item);
-      return { ...item, _idx: idx };
-    });
+const indexed = historial.map((item) => {
+  const idx = rawHistorial.indexOf(item);
+  return { ...item, _idx: idx };
+});
 
-    const sorted = indexed.sort((a, b) => {
+// ORDEN SEGÚN SELECCIÓN
+const sorted = indexed.sort((a, b) => {
+  switch (ordenHistorial) {
+    case "fecha_asc": {
+      if (a.fecha === b.fecha && a.ejercicio === b.ejercicio) {
+        return a.serieNumero - b.serieNumero;
+      }
+      if (a.fecha === b.fecha) {
+        return a.ejercicio.localeCompare(b.ejercicio);
+      }
+      return a.fecha < b.fecha ? -1 : 1;
+    }
+    case "peso_desc":
+      return b.peso - a.peso || b.volumen - a.volumen;
+    case "peso_asc":
+      return a.peso - b.peso || a.volumen - b.volumen;
+    case "volumen_desc":
+      return b.volumen - a.volumen || b.peso - a.peso;
+    case "volumen_asc":
+      return a.volumen - b.volumen || a.peso - b.peso;
+    case "fecha_desc":
+    default: {
       if (a.fecha === b.fecha && a.ejercicio === b.ejercicio) {
         return a.serieNumero - b.serieNumero;
       }
@@ -439,7 +483,10 @@ let ordenHistorial = "fecha_desc";
         return a.ejercicio.localeCompare(b.ejercicio);
       }
       return a.fecha < b.fecha ? 1 : -1;
-    });
+    }
+  }
+});
+
 
     for (const item of sorted) {
       const row = document.createElement("tr");
@@ -639,13 +686,51 @@ let ordenHistorial = "fecha_desc";
     });
   });
 
-  historialGrupoFilter.addEventListener("change", () => {
-    filtroGrupo = historialGrupoFilter.value;
-    const username = getCurrentSession();
-    if (username) {
-      renderHistorial(username);
-    }
-  });
+  // Filtro por grupo
+historialGrupoFilter.addEventListener("change", () => {
+  filtroGrupo = historialGrupoFilter.value;
+  const username = getCurrentSession();
+  if (username) renderHistorial(username);
+});
+
+// Botón HOY (toggle)
+filtroHoyBtn.addEventListener("click", () => {
+  filtroSoloHoy = !filtroSoloHoy;
+  filtroHoyBtn.classList.toggle("active", filtroSoloHoy);
+  const username = getCurrentSession();
+  if (username) renderHistorial(username);
+});
+
+// Checkbox MES ACTUAL
+filtroMesActualCheckbox.addEventListener("change", () => {
+  filtroSoloMesActual = filtroMesActualCheckbox.checked;
+  const username = getCurrentSession();
+  if (username) renderHistorial(username);
+});
+
+// Orden
+ordenHistorialSelect.addEventListener("change", () => {
+  ordenHistorial = ordenHistorialSelect.value;
+  const username = getCurrentSession();
+  if (username) renderHistorial(username);
+});
+
+// Borrar filtros
+limpiarFiltrosBtn.addEventListener("click", () => {
+  filtroGrupo = "TODOS";
+  filtroSoloHoy = false;
+  filtroSoloMesActual = false;
+  ordenHistorial = "fecha_desc";
+
+  historialGrupoFilter.value = "TODOS";
+  filtroHoyBtn.classList.remove("active");
+  filtroMesActualCheckbox.checked = false;
+  ordenHistorialSelect.value = "fecha_desc";
+
+  const username = getCurrentSession();
+  if (username) renderHistorial(username);
+});
+
 
   // ====================== INICIALIZACIÓN =======================
 
@@ -669,4 +754,5 @@ let ordenHistorial = "fecha_desc";
       });
   }
 });
+
 
