@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const fechaInput = document.getElementById("serie-fecha");
   const grupoInput = document.getElementById("serie-grupo");
   const ejercicioInput = document.getElementById("serie-ejercicio");
-  const seriesInput = document.getElementById("serie-series");
+  const serieNumInput = document.getElementById("serie-series"); // Nº de serie
   const repsInput = document.getElementById("serie-reps");
   const pesoInput = document.getElementById("serie-peso");
 
@@ -40,6 +40,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const historialBody = document.getElementById("historial-body");
   const resumenGlobalContainer = document.getElementById("resumen-global");
   const resumenGruposContainer = document.getElementById("resumen-grupos");
+
+  // Filtro de historial
+  const historialGrupoFilter = document.getElementById("historial-grupo-filter");
+  let filtroGrupo = "TODOS";
 
   // Para saber si estamos editando una serie
   let editingIndex = null;
@@ -127,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setToday(fechaInput);
     grupoInput.value = "";
     ejercicioInput.value = "";
-    seriesInput.value = "";
+    serieNumInput.value = "";
     repsInput.value = "";
     pesoInput.value = "";
   }
@@ -256,11 +260,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const fecha = fechaInput.value;
     const grupo = grupoInput.value.trim();
     const ejercicio = ejercicioInput.value.trim();
-    const series = Number(seriesInput.value);
+    const serieNumero = Number(serieNumInput.value);
     const reps = Number(repsInput.value);
     const peso = Number(pesoInput.value);
 
-    if (!fecha || !grupo || !ejercicio || !series || !reps || isNaN(peso)) {
+    if (
+      !fecha ||
+      !grupo ||
+      !ejercicio ||
+      !serieNumero ||
+      !reps ||
+      isNaN(peso)
+    ) {
       showMessage("Completá todos los campos de la serie.", "error");
       return;
     }
@@ -271,10 +282,10 @@ document.addEventListener("DOMContentLoaded", () => {
       fecha,
       grupo,
       ejercicio,
-      series,
+      serieNumero,
       reps,
       peso,
-      volumen: series * reps * peso,
+      volumen: reps * peso,
     };
 
     let msg;
@@ -313,11 +324,17 @@ document.addEventListener("DOMContentLoaded", () => {
     showMessage(msg, "success");
   });
 
-  // ====================== HISTORIAL (CON EDITAR/BORRAR) =======================
+  // ====================== HISTORIAL (CON EDITAR/BORRAR + FILTRO) =======================
 
   function renderHistorial(username) {
     const data = getUserData(username);
-    const historial = data.historial || [];
+    const rawHistorial = data.historial || [];
+
+    // Aplicar filtro por grupo
+    const historial =
+      filtroGrupo === "TODOS"
+        ? rawHistorial
+        : rawHistorial.filter((h) => h.grupo === filtroGrupo);
 
     historialBody.innerHTML = "";
 
@@ -325,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const row = document.createElement("tr");
       const cell = document.createElement("td");
       cell.colSpan = 8;
-      cell.textContent = "Todavía no cargaste ninguna serie.";
+      cell.textContent = "Todavía no cargaste ninguna serie (o no hay en este grupo).";
       cell.style.textAlign = "center";
       row.appendChild(cell);
       historialBody.appendChild(row);
@@ -333,14 +350,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Mapeo con índice original
-    const indexed = historial.map((item, index) => ({
-      ...item,
-      _idx: index,
-    }));
+    const indexed = historial.map((item) => {
+      const idx = rawHistorial.indexOf(item);
+      return { ...item, _idx: idx };
+    });
 
-    // Ordenar por fecha desc (último arriba)
+    // Ordenar por fecha desc y Nº de serie asc
     const sorted = indexed.sort((a, b) => {
-      if (a.fecha === b.fecha) return 0;
+      if (a.fecha === b.fecha && a.ejercicio === b.ejercicio) {
+        return a.serieNumero - b.serieNumero;
+      }
+      if (a.fecha === b.fecha) {
+        return a.ejercicio.localeCompare(b.ejercicio);
+      }
       return a.fecha < b.fecha ? 1 : -1;
     });
 
@@ -351,7 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${formatDate(item.fecha)}</td>
         <td>${item.grupo}</td>
         <td>${item.ejercicio}</td>
-        <td>${item.series}</td>
+        <td>${item.serieNumero}</td>
         <td>${item.reps}</td>
         <td>${item.peso}</td>
         <td>${item.volumen}</td>
@@ -390,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fechaInput.value = entry.fecha;
       grupoInput.value = entry.grupo;
       ejercicioInput.value = entry.ejercicio;
-      seriesInput.value = entry.series;
+      serieNumInput.value = entry.serieNumero;
       repsInput.value = entry.reps;
       pesoInput.value = entry.peso;
 
@@ -457,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Globales
-    const totalSeries = historial.reduce((acc, h) => acc + h.series, 0);
+    const totalSeries = historial.length; // una entrada = una serie real
     const totalVolumen = historial.reduce((acc, h) => acc + h.volumen, 0);
 
     const diasUnicos = new Set(historial.map((h) => h.fecha));
@@ -486,7 +508,7 @@ document.addEventListener("DOMContentLoaded", () => {
       makeResumenCard(
         "Series totales",
         totalSeries,
-        "Suma de todas las series que cargaste."
+        "Cantidad total de series registradas."
       )
     );
 
@@ -494,7 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
       makeResumenCard(
         "Volumen total",
         totalVolumen.toLocaleString("es-AR"),
-        "Series × reps × peso (kg) de todo tu historial."
+        "Suma de (reps × peso) de todas las series."
       )
     );
 
@@ -515,7 +537,7 @@ document.addEventListener("DOMContentLoaded", () => {
           volumen: 0,
         };
       }
-      gruposMap[h.grupo].series += h.series;
+      gruposMap[h.grupo].series += 1; // una entrada = una serie
       gruposMap[h.grupo].volumen += h.volumen;
     }
 
@@ -555,6 +577,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Filtro por grupo en historial
+  historialGrupoFilter.addEventListener("change", () => {
+    filtroGrupo = historialGrupoFilter.value;
+    const username = getCurrentSession();
+    if (username) {
+      renderHistorial(username);
+    }
+  });
+
   // ====================== SESIÓN AL INICIAR =======================
 
   const existingSession = getCurrentSession();
@@ -567,7 +598,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================== SERVICE WORKER (PWA) =======================
 
   if ("serviceWorker" in navigator) {
-    navigator
+    navigator.serviceWorker
       .register("./service-worker.js")
       .catch((err) => {
         console.error("Error registrando service worker:", err);
