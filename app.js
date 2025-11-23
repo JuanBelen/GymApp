@@ -15,16 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("login-form");
   const registerForm = document.getElementById("register-form");
   const serieForm = document.getElementById("serie-form");
-  const serieSubmitBtn = serieForm.querySelector("button[type='submit']");
-  const guardarBatchBtn = document.getElementById("guardar-batch-btn");
+  const guardarSeriesBtn = document.getElementById("guardar-series-btn");
 
-  // Inputs serie
+  // Inputs principales
   const fechaInput = document.getElementById("serie-fecha");
   const grupoInput = document.getElementById("serie-grupo");
   const ejercicioInput = document.getElementById("serie-ejercicio");
-  const serieNumInput = document.getElementById("serie-series"); // Nº de serie
-  const repsInput = document.getElementById("serie-reps");
-  const pesoInput = document.getElementById("serie-peso");
+
+  const seriesContainer = document.getElementById("series-container");
+  const addSerieBtn = document.getElementById("add-serie-btn");
 
   // Botón logout
   const logoutBtn = document.getElementById("logout-btn");
@@ -46,14 +45,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const historialGrupoFilter = document.getElementById("historial-grupo-filter");
   let filtroGrupo = "TODOS";
 
-  // Batch de series (en memoria antes de guardar)
-  let currentBatch = [];
+  // Config carga múltiple
+  const MIN_SERIES = 3;
+  const MAX_SERIES = 5;
+  let seriesCount = 0;
 
-  // Para saber si estamos editando una serie guardada
-  let editingIndex = null;
-
-  // Setear fecha hoy por defecto
-  setToday(fechaInput);
+  // Editar serie existente
+  let editingIndex = null; // índice en historial de la serie que se edita (o null)
 
   // ====================== HELPERS STORAGE =======================
 
@@ -81,7 +79,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function getUserData(username) {
     const raw = localStorage.getItem(STORAGE_USER_PREFIX + username);
     if (raw) return JSON.parse(raw);
-    // Estructura inicial
     return { rutinas: [], historial: [] };
   }
 
@@ -103,30 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function switchToApp(username) {
-    authSection.classList.add("hidden");
-    appSection.classList.remove("hidden");
-    userNameLabel.textContent = username;
-
-    editingIndex = null;
-    serieSubmitBtn.textContent = "Agregar a la lista";
-    clearSerieForm();
-    currentBatch = [];
-    renderBatch();
-    renderHistorial(username);
-    renderResumen(username);
-  }
-
-  function switchToAuth() {
-    authSection.classList.remove("hidden");
-    appSection.classList.add("hidden");
-    editingIndex = null;
-    serieSubmitBtn.textContent = "Agregar a la lista";
-    clearSerieForm();
-    currentBatch = [];
-    renderBatch();
-  }
-
   function setToday(input) {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -135,20 +108,56 @@ document.addEventListener("DOMContentLoaded", () => {
     input.value = `${yyyy}-${mm}-${dd}`;
   }
 
-  function clearSerieForm() {
+  function resetSeriesRows() {
+    seriesContainer.innerHTML = "";
+    seriesCount = 0;
+    for (let i = 0; i < MIN_SERIES; i++) {
+      addSerieRow();
+    }
+  }
+
+  function addSerieRow() {
+    if (seriesCount >= MAX_SERIES) {
+      showMessage("Máximo 5 series por ejercicio.", "info");
+      return;
+    }
+    seriesCount += 1;
+    const row = document.createElement("div");
+    row.className = "series-row";
+    row.dataset.serieNumero = String(seriesCount);
+
+    row.innerHTML = `
+      <div class="series-label">Serie ${seriesCount}</div>
+      <input type="number" min="1" step="1" class="serie-reps" placeholder="Reps" />
+      <input type="number" min="0" step="0.5" class="serie-peso" placeholder="Peso (kg)" />
+    `;
+
+    seriesContainer.appendChild(row);
+  }
+
+  function clearMainForm() {
     setToday(fechaInput);
     grupoInput.value = "";
     ejercicioInput.value = "";
-    serieNumInput.value = "";
-    repsInput.value = "";
-    pesoInput.value = "";
+    editingIndex = null;
+    guardarSeriesBtn.textContent = "Guardar series";
+    resetSeriesRows();
   }
 
-  function clearSeriesFieldsKeepContext() {
-    // Deja fecha / grupo / ejercicio igual, limpia sólo serie/reps/peso
-    serieNumInput.value = "";
-    repsInput.value = "";
-    pesoInput.value = "";
+  function switchToApp(username) {
+    authSection.classList.add("hidden");
+    appSection.classList.remove("hidden");
+    userNameLabel.textContent = username;
+    clearMainForm();
+    renderHistorial(username);
+    renderResumen(username);
+  }
+
+  function switchToAuth() {
+    authSection.classList.remove("hidden");
+    appSection.classList.add("hidden");
+    editingIndex = null;
+    resetSeriesRows();
   }
 
   // ====================== STREAK / FRASE MOTIVACIONAL =======================
@@ -162,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const fechas = historial.map((h) => h.fecha).sort(); // ascendente
+    const fechas = historial.map((h) => h.fecha).sort(); // asc
     const ultima = fechas[fechas.length - 1];
 
     const today = new Date();
@@ -243,15 +252,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     users.push({ username, password });
     saveUsers(users);
-
-    // Crear data inicial
     saveUserData(username, { rutinas: [], historial: [] });
 
     setCurrentSession(username);
     showMessage("Cuenta creada. Sesión iniciada.", "success");
     switchToApp(username);
-
-    // Limpio formulario registro
     registerForm.reset();
   });
 
@@ -261,10 +266,19 @@ document.addEventListener("DOMContentLoaded", () => {
     showMessage("Sesión cerrada.", "info");
   });
 
-  // ====================== CARGAR / EDITAR SERIE =======================
+  // ====================== CARGA DE SERIES (3–5 A LA VEZ) =======================
 
-  // 1) Submit del formulario: si estoy editando => actualizo historial,
-  //    si NO => agrego la serie al batch (no guarda todavía en historial)
+  addSerieBtn.addEventListener("click", () => {
+    if (editingIndex !== null) {
+      showMessage(
+        "Estás editando una serie. Guardá los cambios antes de agregar nuevas filas.",
+        "info"
+      );
+      return;
+    }
+    addSerieRow();
+  });
+
   serieForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const username = getCurrentSession();
@@ -277,174 +291,108 @@ document.addEventListener("DOMContentLoaded", () => {
     const fecha = fechaInput.value;
     const grupo = grupoInput.value.trim();
     const ejercicio = ejercicioInput.value.trim();
-    const serieNumero = Number(serieNumInput.value);
-    const reps = Number(repsInput.value);
-    const peso = Number(pesoInput.value);
 
-    if (
-      !fecha ||
-      !grupo ||
-      !ejercicio ||
-      !serieNumero ||
-      !reps ||
-      isNaN(peso)
-    ) {
-      showMessage("Completá todos los campos de la serie.", "error");
+    if (!fecha || !grupo || !ejercicio) {
+      showMessage("Completá fecha, grupo y ejercicio.", "error");
       return;
     }
 
     const data = getUserData(username);
 
-    const entry = {
-      fecha,
-      grupo,
-      ejercicio,
-      serieNumero,
-      reps,
-      peso,
-      volumen: reps * peso,
-    };
-
-    // Si estoy editando una serie ya guardada, la actualizo directo en historial
+    // Si estoy en modo edición, sólo hay una fila que representa esa serie
     if (editingIndex !== null) {
-      if (!data.historial[editingIndex]) {
+      const row = seriesContainer.querySelector(".series-row");
+      if (!row) {
         showMessage("No se encontró la serie a editar.", "error");
-        editingIndex = null;
-        serieSubmitBtn.textContent = "Agregar a la lista";
         return;
       }
 
-      data.historial[editingIndex] = entry;
-      saveUserData(username, data);
+      const reps = Number(row.querySelector(".serie-reps").value);
+      const peso = Number(row.querySelector(".serie-peso").value);
+      const serieNumero = Number(row.dataset.serieNumero);
 
+      if (!reps || isNaN(peso)) {
+        showMessage("Completá reps y peso para la serie.", "error");
+        return;
+      }
+
+      data.historial[editingIndex] = {
+        fecha,
+        grupo,
+        ejercicio,
+        serieNumero,
+        reps,
+        peso,
+        volumen: reps * peso,
+      };
+
+      saveUserData(username, data);
       editingIndex = null;
-      serieSubmitBtn.textContent = "Agregar a la lista";
-      clearSerieForm();
-      currentBatch = [];
-      renderBatch();
+      guardarSeriesBtn.textContent = "Guardar series";
+      clearMainForm();
       renderHistorial(username);
       renderResumen(username);
       showMessage("Serie actualizada.", "success");
       return;
     }
 
-    // Si NO estoy editando: agrego al batch
-    currentBatch.push(entry);
-    renderBatch();
+    // NUEVO BLOQUE DE SERIES
+    const rows = Array.from(seriesContainer.querySelectorAll(".series-row"));
+    const nuevasSeries = [];
 
-    // Auto-sugerir siguiente Nº de serie
-    serieNumInput.value = serieNumero + 1;
-    repsInput.value = "";
-    pesoInput.value = "";
+    rows.forEach((row) => {
+      const serieNumero = Number(row.dataset.serieNumero);
+      const reps = Number(row.querySelector(".serie-reps").value);
+      const peso = Number(row.querySelector(".serie-peso").value);
 
-    showMessage(
-      "Serie agregada a la lista. Guardá todas juntas con 'Guardar series'.",
-      "info"
-    );
-  });
+      // Sólo tomamos filas completas
+      if (reps && !isNaN(peso)) {
+        nuevasSeries.push({
+          fecha,
+          grupo,
+          ejercicio,
+          serieNumero,
+          reps,
+          peso,
+          volumen: reps * peso,
+        });
+      }
+    });
 
-  // 2) Guardar batch completo en historial
-  guardarBatchBtn.addEventListener("click", () => {
-    const username = getCurrentSession();
-    if (!username) {
-      showMessage("Tu sesión expiró. Volvé a iniciar sesión.", "error");
-      switchToAuth();
-      return;
-    }
-
-    if (currentBatch.length === 0) {
-      showMessage("No hay series en la lista para guardar.", "error");
-      return;
-    }
-
-    if (currentBatch.length < 3) {
+    if (nuevasSeries.length < MIN_SERIES) {
       showMessage(
-        "Cargá al menos 3 series antes de guardar el lote.",
+        `Cargá al menos ${MIN_SERIES} series completas (reps y peso).`,
         "error"
       );
       return;
     }
 
-    const data = getUserData(username);
+    // Guardar todas las series nuevas
+    data.historial = data.historial.concat(nuevasSeries);
 
-    // Añadir todas las series del batch al historial
-    data.historial = data.historial.concat(currentBatch);
-
-    // Actualizar rutinas (ejercicios únicos)
-    currentBatch.forEach((entry) => {
-      if (
-        !data.rutinas.some(
-          (r) =>
-            r.ejercicio === entry.ejercicio && r.grupo === entry.grupo
-        )
-      ) {
-        data.rutinas.push({
-          grupo: entry.grupo,
-          ejercicio: entry.ejercicio,
-        });
-      }
-    });
+    // Actualizar lista de rutinas (ejercicios únicos)
+    if (
+      !data.rutinas.some(
+        (r) => r.ejercicio === ejercicio && r.grupo === grupo
+      )
+    ) {
+      data.rutinas.push({ grupo, ejercicio });
+    }
 
     saveUserData(username, data);
 
-    currentBatch = [];
-    renderBatch();
-    clearSerieForm();
+    clearMainForm();
     renderHistorial(username);
     renderResumen(username);
-
     showMessage("Series guardadas en tu historial.", "success");
   });
 
-  function renderBatch() {
-    const batchBody = document.getElementById("batch-body");
-    batchBody.innerHTML = "";
+  // ====================== HISTORIAL (EDITAR / BORRAR + FILTRO) =======================
 
-    if (currentBatch.length === 0) {
-      const row = document.createElement("tr");
-      const cell = document.createElement("td");
-      cell.colSpan = 5;
-      cell.textContent = "Todavía no agregaste series a la lista.";
-      cell.style.textAlign = "center";
-      row.appendChild(cell);
-      batchBody.appendChild(row);
-      return;
-    }
-
-    currentBatch
-      .slice()
-      .sort((a, b) => a.serieNumero - b.serieNumero)
-      .forEach((item, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item.serieNumero}</td>
-          <td>${item.reps}</td>
-          <td>${item.peso}</td>
-          <td>${item.volumen}</td>
-          <td>
-            <button class="table-btn delete" data-batch-index="${index}">
-              Quitar
-            </button>
-          </td>
-        `;
-        batchBody.appendChild(row);
-      });
+  function formatDate(isoDate) {
+    const [y, m, d] = isoDate.split("-");
+    return `${d}/${m}/${y}`;
   }
-
-  // Quitar serie del batch
-  document
-    .getElementById("batch-body")
-    .addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-batch-index]");
-      if (!btn) return;
-      const idx = Number(btn.dataset.batchIndex);
-      if (idx >= 0 && idx < currentBatch.length) {
-        currentBatch.splice(idx, 1);
-        renderBatch();
-      }
-    });
-
-  // ====================== HISTORIAL (CON EDITAR/BORRAR + FILTRO) =======================
 
   function renderHistorial(username) {
     const data = getUserData(username);
@@ -486,7 +434,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (const item of sorted) {
       const row = document.createElement("tr");
-
       row.innerHTML = `
         <td>${formatDate(item.fecha)}</td>
         <td>${item.grupo}</td>
@@ -500,7 +447,6 @@ document.addEventListener("DOMContentLoaded", () => {
           <button class="table-btn delete" data-action="delete" data-index="${item._idx}">Borrar</button>
         </td>
       `;
-
       historialBody.appendChild(row);
     }
   }
@@ -509,42 +455,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
 
-    const action = btn.dataset.action;
-    const idx = Number(btn.dataset.index);
     const username = getCurrentSession();
-
     if (!username) {
       showMessage("Tu sesión expiró. Volvé a iniciar sesión.", "error");
       switchToAuth();
       return;
     }
 
+    const action = btn.dataset.action;
+    const idx = Number(btn.dataset.index);
     const data = getUserData(username);
 
     if (action === "edit") {
       const entry = data.historial[idx];
       if (!entry) return;
 
+      // Llevar datos al formulario
       fechaInput.value = entry.fecha;
       grupoInput.value = entry.grupo;
       ejercicioInput.value = entry.ejercicio;
-      serieNumInput.value = entry.serieNumero;
-      repsInput.value = entry.reps;
-      pesoInput.value = entry.peso;
+
+      // Mostrar UNA fila con esa serie para editar
+      seriesContainer.innerHTML = "";
+      seriesCount = 1;
+      const row = document.createElement("div");
+      row.className = "series-row";
+      row.dataset.serieNumero = String(entry.serieNumero);
+      row.innerHTML = `
+        <div class="series-label">Serie ${entry.serieNumero}</div>
+        <input type="number" min="1" step="1" class="serie-reps" value="${entry.reps}" />
+        <input type="number" min="0" step="0.5" class="serie-peso" value="${entry.peso}" />
+      `;
+      seriesContainer.appendChild(row);
 
       editingIndex = idx;
-      serieSubmitBtn.textContent = "Guardar cambios";
+      guardarSeriesBtn.textContent = "Guardar cambios";
 
-      // Cambiar a la pestaña "Cargar serie"
+      // Cambiar a pestaña Cargar serie
       tabButtons.forEach((b) => {
         b.classList.toggle("active", b.dataset.view === "cargar-view");
       });
       Object.values(views).forEach((view) =>
         view.classList.toggle("hidden", view.id !== "cargar-view")
       );
-
-      currentBatch = [];
-      renderBatch();
 
       showMessage("Editando serie seleccionada.", "info");
     }
@@ -556,8 +509,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (editingIndex === idx) {
         editingIndex = null;
-        serieSubmitBtn.textContent = "Agregar a la lista";
-        clearSerieForm();
+        guardarSeriesBtn.textContent = "Guardar series";
+        clearMainForm();
       }
 
       renderHistorial(username);
@@ -566,12 +519,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  function formatDate(isoDate) {
-    const [y, m, d] = isoDate.split("-");
-    return `${d}/${m}/${y}`;
-  }
-
   // ====================== RESUMEN =======================
+
+  function makeResumenCard(label, value, note) {
+    const card = document.createElement("div");
+    card.className = "resumen-card";
+    card.innerHTML = `
+      <div class="resumen-label">${label}</div>
+      <div class="resumen-value">${value}</div>
+      <div class="resumen-note">${note}</div>
+    `;
+    return card;
+  }
 
   function renderResumen(username) {
     const data = getUserData(username);
@@ -596,7 +555,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const totalSeries = historial.length;
     const totalVolumen = historial.reduce((acc, h) => acc + h.volumen, 0);
-
     const diasUnicos = new Set(historial.map((h) => h.fecha));
     const sesiones = diasUnicos.size;
 
@@ -616,7 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "Cantidad de días diferentes en los que cargaste series."
       )
     );
-
     resumenGlobalContainer.appendChild(
       makeResumenCard(
         "Series totales",
@@ -624,7 +581,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "Cantidad total de series registradas."
       )
     );
-
     resumenGlobalContainer.appendChild(
       makeResumenCard(
         "Volumen total",
@@ -632,7 +588,6 @@ document.addEventListener("DOMContentLoaded", () => {
         "Suma de (reps × peso) de todas las series."
       )
     );
-
     resumenGlobalContainer.appendChild(
       makeResumenCard(
         "Tu mayor peso",
@@ -644,10 +599,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const gruposMap = {};
     for (const h of historial) {
       if (!gruposMap[h.grupo]) {
-        gruposMap[h.grupo] = {
-          series: 0,
-          volumen: 0,
-        };
+        gruposMap[h.grupo] = { series: 0, volumen: 0 };
       }
       gruposMap[h.grupo].series += 1;
       gruposMap[h.grupo].volumen += h.volumen;
@@ -664,32 +616,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function makeResumenCard(label, value, note) {
-    const card = document.createElement("div");
-    card.className = "resumen-card";
-    card.innerHTML = `
-      <div class="resumen-label">${label}</div>
-      <div class="resumen-value">${value}</div>
-      <div class="resumen-note">${note}</div>
-    `;
-    return card;
-  }
-
-  // ====================== NAV TABS =======================
+  // ====================== NAV TABS / FILTRO =======================
 
   tabButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetView = btn.dataset.view;
-
       tabButtons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-
-      Object.values(views).forEach((view) => view.classList.add("hidden"));
+      Object.values(views).forEach((view) =>
+        view.classList.add("hidden")
+      );
       views[targetView].classList.remove("hidden");
     });
   });
 
-  // Filtro por grupo en historial
   historialGrupoFilter.addEventListener("change", () => {
     filtroGrupo = historialGrupoFilter.value;
     const username = getCurrentSession();
@@ -698,7 +638,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ====================== SESIÓN AL INICIAR =======================
+  // ====================== INICIALIZACIÓN =======================
+
+  setToday(fechaInput);
+  resetSeriesRows();
 
   const existingSession = getCurrentSession();
   if (existingSession) {
