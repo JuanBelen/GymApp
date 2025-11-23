@@ -326,6 +326,28 @@ tbody tr:nth-child(odd) {
   border-color: #ef4444;
 }
 
+/* FILTROS HISTORIAL */
+
+.filters-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filters-row select {
+  min-width: 140px;
+}
+
 /* UTILS */
 
 .hidden {
