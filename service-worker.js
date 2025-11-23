@@ -34,10 +34,11 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
 
-      return fetch(event.request).catch(() =>
-        new Response("Sin conexión y recurso no cacheado.", {
-          status: 503,
-        })
+      return fetch(event.request).catch(
+        () =>
+          new Response("Sin conexión y recurso no cacheado.", {
+            status: 503,
+          })
       );
     })
   );
