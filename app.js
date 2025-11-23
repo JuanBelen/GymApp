@@ -42,8 +42,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const resumenGruposContainer = document.getElementById("resumen-grupos");
 
   // Filtro de historial
-  const historialGrupoFilter = document.getElementById("historial-grupo-filter");
-  let filtroGrupo = "TODOS";
+ const historialGrupoFilter = document.getElementById("historial-grupo-filter");
+const filtroHoyBtn = document.getElementById("filtro-hoy-btn");
+const filtroMesActualCheckbox = document.getElementById("filtro-mes-actual");
+const ordenHistorialSelect = document.getElementById("orden-historial-select");
+const limpiarFiltrosBtn = document.getElementById("limpiar-filtros-btn");
+
+let filtroGrupo = "TODOS";
+let filtroSoloHoy = false;
+let filtroSoloMesActual = false;
+let ordenHistorial = "fecha_desc";
+
 
   // Config carga múltiple
   const MIN_SERIES = 3;
@@ -660,3 +669,4 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 });
+
