@@ -7,16 +7,16 @@
 
   <!-- PWA -->
   <meta name="theme-color" content="#111827" />
-  <link rel="stylesheet" href="/GymApp/styles.css" />
-<script src="/GymApp/app.js" defer></script>
-<link rel="manifest" href="/GymApp/manifest.webmanifest" />
+  <link rel="manifest" href="/GymApp/manifest.webmanifest" />
 
-  <script src="app.js" defer></script>
+  <!-- RUTAS ABSOLUTAS PARA GITHUB PAGES -->
+  <link rel="stylesheet" href="/GymApp/styles.css" />
+  <script src="/GymApp/app.js" defer></script>
 </head>
 <body>
   <div class="app-container">
     <header class="app-header">
-      <h1>GymApp</h1>
+      <h1>GYMAPP</h1>
       <p class="subtitle">Tus rutinas y progresos, en un solo lugar</p>
     </header>
 
@@ -70,98 +70,4 @@
 
       <!-- NAV INTERNO -->
       <nav class="tabs card">
-        <button class="tab-btn active" data-view="cargar-view">Cargar serie</button>
-        <button class="tab-btn" data-view="historial-view">Historial</button>
-        <button class="tab-btn" data-view="resumen-view">Resumen</button>
-      </nav>
-
-      <!-- VISTA CARGAR SERIE -->
-      <section id="cargar-view" class="card view">
-        <h3>Cargar nueva serie</h3>
-        <form id="serie-form" class="form">
-          <label>
-            Fecha
-            <input type="date" id="serie-fecha" required />
-          </label>
-          <label>
-            Grupo muscular
-            <select id="serie-grupo" required>
-              <option value="">Seleccionar…</option>
-              <option>Pecho</option>
-              <option>Espalda</option>
-              <option>Hombros</option>
-              <option>Bíceps</option>
-              <option>Tríceps</option>
-              <option>Piernas</option>
-              <option>Glúteos</option>
-              <option>Core / Abdominales</option>
-            </select>
-          </label>
-          <label>
-            Ejercicio
-            <input type="text" id="serie-ejercicio" placeholder="Press banca, Dominadas, Sentadillas…" required />
-          </label>
-          <div class="form-row">
-            <label>
-              Series
-              <input type="number" id="serie-series" min="1" step="1" required />
-            </label>
-            <label>
-              Reps
-              <input type="number" id="serie-reps" min="1" step="1" required />
-            </label>
-            <label>
-              Peso (kg)
-              <input type="number" id="serie-peso" min="0" step="0.5" required />
-            </label>
-          </div>
-
-          <button type="submit" class="btn primary full-width">Guardar serie</button>
-        </form>
-      </section>
-
-      <!-- VISTA HISTORIAL -->
-      <section id="historial-view" class="card view hidden">
-        <h3>Historial de entrenamientos</h3>
-        <p class="small-text">Se muestran las series que fuiste cargando.</p>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Grupo</th>
-                <th>Ejercicio</th>
-                <th>Series</th>
-                <th>Reps</th>
-                <th>Peso (kg)</th>
-                <th>Volumen</th>
-              </tr>
-            </thead>
-            <tbody id="historial-body">
-              <!-- filas dinámicas -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- VISTA RESUMEN -->
-      <section id="resumen-view" class="card view hidden">
-        <h3>Resumen de progreso</h3>
-        <div id="resumen-global" class="resumen-grid">
-          <!-- tarjetas globales -->
-        </div>
-
-        <h4>Por grupo muscular</h4>
-        <div id="resumen-grupos" class="resumen-grid">
-          <!-- tarjetas por grupo -->
-        </div>
-      </section>
-    </main>
-
-    <footer class="app-footer">
-      <p>GymApp Phase 2 · Hecha para usarse como app móvil desde el navegador</p>
-    </footer>
-  </div>
-</body>
-</html>
-
+        <button class="t
