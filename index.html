@@ -76,9 +76,9 @@
         <button class="tab-btn" data-view="resumen-view">Resumen</button>
       </nav>
 
-      <!-- VISTA CARGAR SERIE -->
+      <!-- VISTA CARGAR SERIE (AHORA CON LISTA Y GUARDAR SERIES) -->
       <section id="cargar-view" class="card view">
-        <h3>Cargar nueva serie</h3>
+        <h3>Cargar nuevas series</h3>
         <form id="serie-form" class="form">
           <label>
             Fecha
@@ -100,12 +100,24 @@
           </label>
           <label>
             Ejercicio
-            <input type="text" id="serie-ejercicio" placeholder="Press banca, Dominadas, Sentadillas…" required />
+            <input
+              type="text"
+              id="serie-ejercicio"
+              placeholder="Press banca, Dominadas, Sentadillas…"
+              required
+            />
           </label>
           <div class="form-row">
             <label>
               Nº de serie
-              <input type="number" id="serie-series" min="1" step="1" placeholder="1, 2, 3..." required />
+              <input
+                type="number"
+                id="serie-series"
+                min="1"
+                step="1"
+                placeholder="1, 2, 3..."
+                required
+              />
             </label>
             <label>
               Reps
@@ -117,8 +129,38 @@
             </label>
           </div>
 
-          <button type="submit" class="btn primary full-width">Guardar serie</button>
+          <button type="submit" class="btn secondary full-width">
+            Agregar a la lista
+          </button>
         </form>
+
+        <div class="batch-wrapper">
+          <div class="batch-header">
+            <h4>Series en esta sesión</h4>
+            <small class="small-text">
+              Cargá al menos 3 series y luego guardalas todas juntas.
+            </small>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nº serie</th>
+                  <th>Reps</th>
+                  <th>Peso (kg)</th>
+                  <th>Volumen</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="batch-body">
+                <!-- series en memoria -->
+              </tbody>
+            </table>
+          </div>
+          <button id="guardar-batch-btn" class="btn primary full-width">
+            Guardar series
+          </button>
+        </div>
       </section>
 
       <!-- VISTA HISTORIAL -->
