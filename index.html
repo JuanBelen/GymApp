@@ -133,21 +133,56 @@
         <p class="small-text">Se muestran las series que fuiste cargando.</p>
 
         <div class="filters-row">
-          <label class="filter-label">
-            Grupo:
-            <select id="historial-grupo-filter">
-              <option value="TODOS">Todos</option>
-              <option value="Pecho">Pecho</option>
-              <option value="Espalda">Espalda</option>
-              <option value="Hombros">Hombros</option>
-              <option value="Bíceps">Bíceps</option>
-              <option value="Tríceps">Tríceps</option>
-              <option value="Piernas">Piernas</option>
-              <option value="Glúteos">Glúteos</option>
-              <option value="Core / Abdominales">Core / Abdominales</option>
-            </select>
-          </label>
-        </div>
+  <!-- Filtro por grupo -->
+  <label class="filter-label">
+    Grupo:
+    <select id="historial-grupo-filter">
+      <option value="TODOS">Todos</option>
+      <option value="Pecho">Pecho</option>
+      <option value="Espalda">Espalda</option>
+      <option value="Hombros">Hombros</option>
+      <option value="Bíceps">Bíceps</option>
+      <option value="Tríceps">Tríceps</option>
+      <option value="Piernas">Piernas</option>
+      <option value="Glúteos">Glúteos</option>
+      <option value="Core / Abdominales">Core / Abdominales</option>
+    </select>
+  </label>
+
+  <!-- HOY -->
+  <button type="button" id="filtro-hoy-btn" class="chip-btn">
+    Hoy
+  </button>
+
+  <!-- MES ACTUAL -->
+  <label class="filter-label">
+    <input type="checkbox" id="filtro-mes-actual" />
+    Mes actual
+  </label>
+
+  <!-- ORDEN -->
+  <label class="filter-label">
+    Ordenar:
+    <select id="orden-historial-select">
+      <option value="fecha_desc">Fecha ↓ (reciente primero)</option>
+      <option value="fecha_asc">Fecha ↑ (antiguas primero)</option>
+      <option value="peso_desc">Peso ↓</option>
+      <option value="peso_asc">Peso ↑</option>
+      <option value="volumen_desc">Volumen ↓</option>
+      <option value="volumen_asc">Volumen ↑</option>
+    </select>
+  </label>
+
+  <!-- LIMPIAR -->
+  <button
+    type="button"
+    id="limpiar-filtros-btn"
+    class="btn secondary btn-compact"
+  >
+    Borrar filtros
+  </button>
+</div>
+
 
         <div class="table-wrapper">
           <table>
@@ -190,3 +225,4 @@
   </div>
 </body>
 </html>
+
