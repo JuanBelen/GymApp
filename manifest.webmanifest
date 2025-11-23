@@ -1,9 +1,10 @@
 {
   "name": "Registro de Gimnasio",
-  "short_name": "Gym Log",
+  "short_name": "GymApp",
+  "description": "App para registrar tus entrenamientos, series, grupos y progresos.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#111827",
   "theme_color": "#111827",
   "icons": [
