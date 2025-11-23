@@ -131,10 +131,25 @@ select:focus {
   border-color: var(--accent);
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* FILAS DE SERIES (BLOQUE 3–5 SERIES) */
+
+.series-container {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  margin-top: 4px;
+}
+
+.series-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 90px) 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.series-label {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 /* BUTTONS */
@@ -244,7 +259,7 @@ tbody tr:nth-child(odd) {
   background: rgba(15, 23, 42, 0.4);
 }
 
-/* Botones de tabla (editar / borrar / quitar) */
+/* Botones de tabla (editar / borrar) */
 .table-btn {
   font-size: 0.7rem;
   padding: 4px 8px;
@@ -348,19 +363,6 @@ tbody tr:nth-child(odd) {
   min-width: 140px;
 }
 
-/* BATCH (carga múltiple) */
-
-.batch-wrapper {
-  margin-top: 16px;
-}
-
-.batch-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 6px;
-}
-
 /* UTILS */
 
 .hidden {
@@ -382,7 +384,7 @@ tbody tr:nth-child(odd) {
     font-size: 1.6rem;
   }
 
-  .form-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .series-row {
+    grid-template-columns: minmax(70px, 80px) 1fr 1fr;
   }
 }
