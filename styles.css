@@ -78,7 +78,8 @@ body {
   margin-top: 12px;
 }
 
-.app-topbar {
+.app-topbar,
+.app-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -131,7 +132,7 @@ select:focus {
   border-color: var(--accent);
 }
 
-/* FILAS DE SERIES (BLOQUE 3–5 SERIES) */
+/* SERIES FORM (3–5 SERIES) */
 
 .series-container {
   display: flex;
@@ -226,7 +227,7 @@ select:focus {
   border-color: rgba(34, 197, 94, 0.6);
 }
 
-/* TABLA */
+/* TABLA HISTORIAL */
 
 .table-wrapper {
   margin-top: 12px;
@@ -260,6 +261,7 @@ tbody tr:nth-child(odd) {
 }
 
 /* Botones de tabla (editar / borrar) */
+
 .table-btn {
   font-size: 0.7rem;
   padding: 4px 8px;
@@ -374,8 +376,13 @@ tbody tr:nth-child(odd) {
   max-width: 220px;
 }
 
+/* bloque ordenar + borrar */
+
 .filter-actions {
-  justify-content: flex-end;
+  display: flex;
+  flex: 1 1 150px;
+  justify-content: flex-start; /* más a la izquierda */
+  margin-top: 2px;
 }
 
 /* Chips "Hoy" / "Mes actual" */
@@ -401,31 +408,50 @@ tbody tr:nth-child(odd) {
   border-color: rgba(34, 197, 94, 0.7);
 }
 
+/* Mes actual como chip */
+
 .chip-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #020617;
+  padding: 6px 10px;
   font-size: 0.8rem;
+  cursor: pointer;
+  gap: 6px;
+  transition: var(--transition);
   color: var(--muted);
 }
 
+/* ocultamos checkbox nativo */
 .chip-checkbox input {
-  width: auto;
+  display: none;
+}
+
+/* estilo cuando está activado */
+.chip-checkbox:has(input:checked) {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: rgba(34, 197, 94, 0.7);
 }
 
 /* Botón pequeño para "Borrar filtros" */
+
 .btn-compact {
   padding: 6px 10px;
   font-size: 0.75rem;
 }
 
 /* Contador de historial */
+
 .counter-line {
   margin-top: 4px;
   font-size: 0.78rem;
 }
 
 /* Highlights en la tabla */
+
 tr.highlight-peso {
   outline: 1px solid rgba(34, 197, 94, 0.6);
   outline-offset: -2px;
