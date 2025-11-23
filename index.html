@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="/GymApp/manifest.webmanifest" />
 
-  <!-- RUTAS ABSOLUTAS PARA GITHUB PAGES -->
+  <!-- Rutas absolutas para GitHub Pages -->
   <link rel="stylesheet" href="/GymApp/styles.css" />
   <script src="/GymApp/app.js" defer></script>
 </head>
@@ -63,6 +63,7 @@
           <div>
             <h2>Hola, <span id="user-name"></span> 👋</h2>
             <p class="small-text">Gestioná tus entrenamientos y seguimiento</p>
+            <p id="streak-message" class="streak-message"></p>
           </div>
           <button id="logout-btn" class="btn danger">Cerrar sesión</button>
         </div>
@@ -135,6 +136,7 @@
                 <th>Reps</th>
                 <th>Peso (kg)</th>
                 <th>Volumen</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="historial-body">
