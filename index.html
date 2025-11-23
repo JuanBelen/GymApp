@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de Gimnasio</title>
+
+  <!-- Color de la barra (PWA) -->
+  <meta name="theme-color" content="#111827" />
+
+  <!-- Manifest de la PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Iconos (deben existir en /icons) -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    /* Banner de racha */
+    .streak-banner {
+      margin: 0 auto 10px auto;
+      max-width: 900px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ef4444, #f97316, #22c55e);
+      color: #f9fafb;
+      font-size: 0.85rem;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Tabs / solapas */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #374151;
+      margin-bottom: 16px;
+      gap: 4px;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: #111827;
+      color: #9ca3af;
+      cursor: pointer;
+      font-weight: 600;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .tab-button.active {
+      background: #1f2937;
+      color: #f9fafb;
+      border-bottom: 2px solid #10b981;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: #1f2937;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input, select, button, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: #f9fafb;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #10b981;
+    }
+
+    .btn-danger {
+      background: #b91c1c;
+    }
+
+    .btn-secondary {
+      background: #4b5563;
+    }
+
+    .btn-xs {
+      padding: 4px 6px;
+      font-size: 0.75rem;
+    }
+
+    .btn-active {
+      box-shadow: 0 0 0 2px #10b981;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid #374151;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #111827;
+      position: sticky;
+      top: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .actions > * {
+      flex: 1 1 110px;
+    }
+
+    @media (min-width: 640px) {
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+    }
+
+    .summary {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      margin-bottom: 6px;
+    }
+
+    .group-row-inner {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .group-row-inner select {
+      flex: 1 1 auto;
+      margin-bottom: 0;
+    }
+
+    .group-add-btn {
+      width: auto;
+      padding-inline: 10px;
+      margin-bottom: 0;
+    }
+
+    .group-new-input {
+      margin-top: 4px;
+    }
+
+    /* Modal de confirmación propio */
+    .app-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .app-modal-backdrop.active {
+      display: flex;
+    }
+
+    .app-modal {
+      background: #1f2937;
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    .app-modal h3 {
+      margin: 0 0 8px 0;
+      font-size: 1.05rem;
+    }
+
+    .app-modal p {
+      margin: 0 0 12px 0;
+      font-size: 0.9rem;
+      white-space: pre-line;
+    }
+
+    .app-modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .app-modal-actions button {
+      flex: 1 1 0;
+      margin-bottom: 0;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #f9fafb;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #10b981;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      font-size: 0.85rem;
+      display: none;
+      z-index: 60;
+    }
+
+    /* Resumen */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+
+    .summary-card {
+      background: #111827;
+      border-radius: 10px;
+      padding: 8px;
+      border: 1px solid #374151;
+      font-size: 0.85rem;
+    }
+
+    .summary-card-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    #summary-chart {
+      background: #111827;
+      border-radius: 10px;
+      border: 1px solid #374151;
+      margin: 8px 0 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Registro de Gimnasio</h1>
+
+  <!-- Banner de racha -->
+  <div id="streak-banner" class="streak-banner">
+    🏋️ Empezá a registrar tus entrenos para ver tu racha.
+  </div>
+
+  <!-- Solapas -->
+  <div class="tabs">
+    <button class="tab-button" data-tab="history">Historial</button>
+    <button class="tab-button active" data-tab="entry">Cargar serie</button>
+    <button class="tab-button" data-tab="groups">Grupos</button>
+    <button class="tab-button" data-tab="summary">Resumen</button>
+    <button class="tab-button" data-tab="profile">Perfil</button>
+  </div>
+
+  <!-- SOLAPA 2: Cargar serie -->
+  <div id="tab-entry" class="tab-content active">
+    <div class="card">
+      <h2>Cargar serie</h2>
+      <div id="edit-indicator" class="summary" style="display:none;color:#fbbf24;margin-bottom:8px;"></div>
+      <form id="workout-form">
+        <div class="grid-2">
+          <div>
+            <label for="date">Fecha</label>
+            <input type="date" id="date" required />
+          </div>
+          <div>
+            <label for="group-select">Grupo</label>
+            <div class="group-row-inner">
+              <select id="group-select">
+                <option value="">Sin grupo</option>
+              </select>
+              <button type="button" id="group-add-btn" class="btn-secondary group-add-btn">+</button>
+            </div>
+            <input
+              type="text"
+              id="group-new"
+              class="group-new-input"
+              placeholder="Nuevo grupo..."
+              style="display:none;"
+            />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="exercise">Ejercicio</label>
+            <input type="text" id="exercise" placeholder="Remo con barra, Press banca..." required />
+          </div>
+          <div class="grid-2" style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;">
+            <div>
+              <label for="sets">Series</label>
+              <input type="number" id="sets" min="1" placeholder="4" required />
+            </div>
+            <div>
+              <label for="reps">Repeticiones</label>
+              <input type="number" id="reps" min="1" placeholder="8" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="weight">Peso (kg)</label>
+            <input type="number" step="0.5" id="weight" min="0" placeholder="60" required />
+          </div>
+        </div>
+
+        <button type="submit" id="submit-series" class="btn-primary">Agregar serie</button>
+        <button type="button" id="cancel-edit" class="btn-secondary" style="display:none;">Cancelar edición</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SOLAPA 1: Historial -->
+  <div id="tab-history" class="tab-content">
+    <div class="card">
+      <h2>Historial</h2>
+
+      <!-- Fila 1 -->
+      <div class="actions">
+        <button id="filter-today" class="btn-secondary">Hoy</button>
+        <button id="filter-all" class="btn-secondary">Todo</button>
+        <select id="group-filter">
+          <option value="all">Grupos (todos)</option>
+        </select>
+        <button id="delete-selected" class="btn-danger">Borrar series</button>
+        <button id="clear-all" class="btn-danger">Borrar TODOS</button>
+      </div>
+
+      <!-- Fila 2: rango fechas -->
+      <div class="actions">
+        <input type="date" id="filter-from" />
+        <input type="date" id="filter-to" />
+        <button id="filter-range" class="btn-secondary">Rango fechas</button>
+      </div>
+
+      <!-- Fila 3: filtros extra -->
+      <div class="actions">
+        <input type="text" id="filter-exercise" placeholder="Buscar ejercicio..." />
+        <button id="filter-prs" class="btn-secondary">Solo PRs</button>
+        <button id="filter-advanced-clear" class="btn-secondary">Limpiar filtros extra</button>
+      </div>
+
+      <!-- Fila 4: export/import -->
+      <div class="actions">
+        <button id="export-json" class="btn-secondary">Exportar datos</button>
+        <button id="import-json" class="btn-secondary">Importar datos</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none;" />
+      </div>
+
+      <div id="summary" class="summary"></div>
+
+      <div style="max-height: 400px; overflow-y: auto; margin-top: 4px;">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Editar</th>
+              <th>Fecha</th>
+              <th>Grupo</th>
+              <th>Ejercicio</th>
+              <th>Series</th>
+              <th>Reps</th>
+              <th>Peso (kg)</th>
+            </tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLAPA 3: Grupos -->
+  <div id="tab-groups" class="tab-content">
+    <div class="card">
+      <h2>Grupos</h2>
+
+      <form id="group-admin-form">
+        <div class="grid-2">
+          <div>
+            <label for="group-admin-name">Nombre del grupo</label>
+            <input type="text" id="group-admin-name" placeholder="Ej: Espalda, Pecho + Tríceps" />
+          </div>
+          <div>
+            <label for="group-admin-info">Info del grupo (opcional)</label>
+            <input type="text" id="group-admin-info" placeholder="Ej: Día de tirón, espalda y bíceps" />
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Agregar / actualizar grupo</button>
+      </form>
+
+      <div style="max-height: 400px; overflow-y: auto; margin-top: 8px;">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>#</th>
+              <th>Grupo</th>
+              <th>Info</th>
+            </tr>
+          </thead>
+          <tbody id="groups-body"></tbody>
+        </table>
+      </div>
+
+      <div class="actions" style="margin-top:8px;">
+        <button id="groups-save-btn" class="btn-secondary">Guardar cambios de info</button>
+        <button id="groups-delete-btn" class="btn-danger">Borrar grupos seleccionados</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLAPA 4: Resumen -->
+  <div id="tab-summary" class="tab-content">
+    <div class="card">
+      <h2>Resumen</h2>
+
+      <div class="actions">
+        <button class="btn-secondary summary-period" data-period="week">Esta semana</button>
+        <button class="btn-secondary summary-period" data-period="month">Este mes</button>
+        <button class="btn-secondary summary-period" data-period="year">Este año</button>
+        <button class="btn-secondary summary-period" data-period="all">Histórico</button>
+      </div>
+
+      <div id="summary-period-label" class="summary"></div>
+
+      <div id="summary-stats" class="summary-cards"></div>
+
+      <canvas id="summary-chart" height="160"></canvas>
+
+      <h3 style="margin-top:4px; margin-bottom:4px; font-size:1rem;">PR por ejercicio</h3>
+      <div style="max-height: 320px; overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Ejercicio</th>
+              <th>PR (kg)</th>
+              <th>1RM estimado (kg)</th>
+              <th>Fecha</th>
+              <th>Grupo</th>
+            </tr>
+          </thead>
+          <tbody id="summary-pr-body"></tbody>
+        </table>
+      </div>
+
+      <p class="summary" style="margin-top:8px;">
+        Nota: el resumen usa el volumen total (series × repeticiones × peso) y tus PR como indicadores reales de progreso.
+        El tiempo total se estima con los minutos por serie que configures en tu Perfil.
+        No se estiman kilos de masa muscular ganada porque para eso haría falta también peso corporal, % de grasa, dieta y descanso.
+      </p>
+    </div>
+  </div>
+
+  <!-- SOLAPA 5: Perfil -->
+  <div id="tab-profile" class="tab-content">
+    <div class="card">
+      <h2>Perfil</h2>
+      <form id="profile-form">
+        <div class="grid-2">
+          <div>
+            <label for="profile-name">Nombre (opcional)</label>
+            <input type="text" id="profile-name" placeholder="Juan, JP, etc." />
+          </div>
+          <div>
+            <label for="profile-birth-year">Año de nacimiento</label>
+            <input type="number" id="profile-birth-year" placeholder="1995" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="profile-height">Altura (cm)</label>
+            <input type="number" id="profile-height" placeholder="175" />
+          </div>
+          <div>
+            <label for="profile-weight">Peso actual (kg)</label>
+            <input type="number" step="0.1" id="profile-weight" placeholder="80" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="profile-minutes-per-set">Minutos por serie</label>
+            <input type="number" step="0.1" id="profile-minutes-per-set" placeholder="1.5" />
+          </div>
+          <div>
+            <label for="profile-goal">Objetivo</label>
+            <input type="text" id="profile-goal" placeholder="Ganar músculo, fuerza, recomposición, etc." />
+          </div>
+        </div>
+
+        <label for="profile-notes">Notas (opcional)</label>
+        <textarea id="profile-notes" rows="2" placeholder="Rutina actual, recordatorios, lesiones, etc."></textarea>
+
+        <button type="submit" class="btn-primary">Guardar perfil</button>
+      </form>
+
+      <p class="summary">
+        Estos datos se guardan solo en este navegador (localStorage). Si borrás el historial del navegador, se pierden.
+      </p>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN -->
+  <div id="confirm-modal" class="app-modal-backdrop">
+    <div class="app-modal">
+      <h3>Confirmar acción</h3>
+      <p id="confirm-message"></p>
+      <div class="app-modal-actions">
+        <button id="confirm-cancel" class="btn-secondary" type="button">Cancelar</button>
+        <button id="confirm-ok" class="btn-danger" type="button">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <!-- Script principal como módulo -->
+  <script type="module" src="js/main.js"></script>
+
+  <!-- Registro del Service Worker para PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('service-worker.js')
+          .catch(err => console.error('Error registrando Service Worker', err));
+      });
+    }
+  </script>
+</body>
+</html>
