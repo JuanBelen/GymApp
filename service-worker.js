@@ -1,11 +1,12 @@
 const CACHE_NAME = "gymapp-v1";
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./manifest.webmanifest"
+  "/GymApp/",
+  "/GymApp/index.html",
+  "/GymApp/styles.css",
+  "/GymApp/app.js",
+  "/GymApp/manifest.webmanifest"
 ];
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -45,3 +46,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
