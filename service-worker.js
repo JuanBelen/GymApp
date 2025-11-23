@@ -1,4 +1,4 @@
-const CACHE_NAME = "gymapp-v1";
+const CACHE_NAME = "gymapp-v2";
 const ASSETS = [
   "/GymApp/",
   "/GymApp/index.html",
@@ -6,7 +6,6 @@ const ASSETS = [
   "/GymApp/app.js",
   "/GymApp/manifest.webmanifest"
 ];
-
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -33,17 +32,13 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).catch(() =>
-          cached
-            ? cached
-            : new Response("Sin conexión y recurso no cacheado.", {
-                status: 503,
-              })
-        )
+      if (cached) return cached;
+
+      return fetch(event.request).catch(() =>
+        new Response("Sin conexión y recurso no cacheado.", {
+          status: 503,
+        })
       );
     })
   );
 });
-
